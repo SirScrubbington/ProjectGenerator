@@ -1,6 +1,10 @@
 #ifndef PROJECT_GENERATOR_H
 #define PROJECT_GENERATOR_H
 
+#ifdef _WIN32
+	#include <windows.h>
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -11,6 +15,7 @@
 #include <time.h>
 
 #define MAX_FILENAME_LEN 255
+#define MAX_FILES 255
 #define HASH_LEN 32
 
 void hashFunc(int len, char * str);

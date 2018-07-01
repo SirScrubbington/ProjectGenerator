@@ -1,12 +1,25 @@
 # Filename: Makefile
 # Author: Scrubbs
-# Date: 2018-6-16
-# Description: 
+# Date: 2018-6-30
+# Description: ProjectGenerator Makefile
 
-all: pgen
+#Project Name (executable)
+PROJECT = pgen
 
-pgen:
-	gcc -o pgen ProjectGenerator.c
-	
+#Compiler
+CXX = g++
+
+#Source Files
+SOURCE = $(wildcard *.c)
+
+#Object Files
+OBJECTS = $(SOURCE:.cpp=.o)
+
+#Build Executable
+$(PROJECT): $(OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+#Clean up additional files
+.PHONY: clean
 clean:
-	rm *.o
+	rm -f $(OBJECT) $(PROJECT)

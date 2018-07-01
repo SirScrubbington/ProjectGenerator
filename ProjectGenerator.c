@@ -97,7 +97,7 @@ int main(int argc, char ** argv, char ** envp)
 						accept=0;
 						while(!(accept == 'y' || accept == 'n'))
 						{
-							printf("Overwrite existing file '%s'? :",filename);
+							printf("Overwrite existing file '%s'? (y\\n)\n",filename);
 							accept = getchar();
 							switch(accept)
 							{
@@ -160,7 +160,7 @@ int main(int argc, char ** argv, char ** envp)
 						accept=0;
 						while(!(accept == 'y' || accept == 'n'))
 						{
-							printf("Overwrite existing file '%s'? :",filename);
+							printf("Overwrite existing file '%s'? (y\\n)\n",filename);
 							accept = getchar();
 							switch(accept)
 							{
@@ -197,7 +197,13 @@ int main(int argc, char ** argv, char ** envp)
 					fprintf(f,"#define %s\n\n",hash);
 					
 					if(createH)
-						fprintf(f,"#include \"%s.h\"\n\n",argv[files[x]]);
+					{
+						fprintf(f,"#include \"%s.h\"\n",argv[files[x]]);
+						if(x==0)
+							for(int y=1;y<nfiles;y++)
+								fprintf(f,"#include \"%s.h\"\n",argv[files[y]]);
+						fprintf(f,"\n");
+					}
 					
 					if(createMain && x==0){
 						fprintf(f,"int main(int argc, char ** argv, char ** envp)\n{\n\n");
@@ -235,7 +241,7 @@ int main(int argc, char ** argv, char ** envp)
 					accept=0;
 					while(!(accept == 'y' || accept == 'n'))
 					{
-						printf("Overwrite existing file '%s'? :",filename);
+						printf("Overwrite existing file '%s'? (y\\n)\n",filename);
 						accept = getchar();
 						switch(accept)
 						{
@@ -269,24 +275,19 @@ int main(int argc, char ** argv, char ** envp)
 				fprintf(f,"# Date: %d-%d-%d\n",tm.tm_year+ 1900,tm.tm_mon + 1,tm.tm_mday);
 				fprintf(f,"# Description: %s Makefile\n\n",projectname);
 				
-				fprintf(f,"all: %s clean\n\n",projectname);
+				fprintf(f,"#Project Name (executable)\nPROJECT = %s\n\n",projectname);
 				
-				fprintf(f,"%s: ",projectname);
+				fprintf(f,"#Compiler\nCXX = g++\n\n");
 				
-				for(int x=0;x<nfiles;x++)
-					fprintf(f,"%s.o ",argv[files[x]]);
+				fprintf(f,"#Source Files\nSOURCE = $(wildcard *.cpp)\n\n");
 				
-				fprintf(f,"\n	gcc -o %s ",projectname);
+				fprintf(f,"#Object Files\nOBJECTS = $(SOURCE:.cpp=.o)\n\n");
 				
-				for(int x=0;x<nfiles;x++)
-					fprintf(f,"%s.o ",argv[files[x]]);
+				fprintf(f,"#Build Executable\n$(PROJECT): $(OBJECTS)\n\t$(CXX) $(CXXFLAGS) -o $@ $^\n\n");
 				
-				fprintf(f,"\n\nclean:\n	rm *.o");
+				fprintf(f,"#Clean up additional files\n.PHONY: clean\nclean:\n\trm -f $(OBJECT) $(PROJECT)");
 			}
-				
-			
 		}
-		
 	}
 	else
 		printf("Usage: pgen projectname [subfile(s)] [-f] [-m] [-h] [-c] [-l] \n");

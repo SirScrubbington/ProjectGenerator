@@ -279,11 +279,15 @@ int main(int argc, char ** argv, char ** envp)
 				
 				fprintf(f,"#Compiler\nCXX = g++\n\n");
 				
+				fprintf(f,"#Compiler Directions\nCXXFLAGS=\n\n");
+				
 				fprintf(f,"#Source Files\nSOURCE = $(wildcard *.cpp)\n\n");
 				
 				fprintf(f,"#Object Files\nOBJECTS = $(SOURCE:.cpp=.o)\n\n");
 				
-				fprintf(f,"#Build Executable\n$(PROJECT): $(OBJECTS)\n\t$(CXX) $(CXXFLAGS) -o $@ $^\n\n");
+				fprintf(f,"#Libraries\nLIBDIR=lib\nLIBRARIES = $(wildcard .lib .a $(LIBDIR)/*.a $(LIBDIR)/*.lib)\n\n");
+				
+				fprintf(f,"#Build Executable\n$(PROJECT): $(OBJECTS)\n\t$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBRARIES) \n\n");
 				
 				fprintf(f,"#Clean up additional files\n.PHONY: clean\nclean:\n\trm -f $(OBJECT) $(PROJECT)");
 			}

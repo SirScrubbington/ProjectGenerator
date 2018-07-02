@@ -34,8 +34,10 @@ int main(int argc, char ** argv, char ** envp)
 		
 		char accept=0;
 		
-		int createC = 0, createH = 0, createMain = 0, createMakefile = 0, forceReplace = 0;
+		//char createC = 0, createCPP = 0, createH = 0, createMain = 0, createMakefile = 0, forceReplace = 0;
 
+		unsigned char properties = 0;
+		
 		char filename[MAX_FILENAME_LEN],
 			 projectname[MAX_FILENAME_LEN],
 			 username[MAX_FILENAME_LEN],
@@ -61,14 +63,22 @@ int main(int argc, char ** argv, char ** envp)
 
 		for(int i=1;i<argc;i++)
 		{
-			if(strcmp(argv[i],"-c")==0)createC=1;
-			else if(strcmp(argv[i],"-h")==0)createH=1;
-			else if(strcmp(argv[i],"-f")==0)forceReplace=1;
-			else if(strcmp(argv[i],"-m")==0)createMakefile=1;
-			else if(strcmp(argv[i],"-i")==0)createMain=1;
+			if(strcmp(argv[i],"-c")==0) properties |= CREATE_C;
+			else 
+				if(strcmp(argv[i],"-h")==0) properties |= CREATE_H;
+			else 
+				if(strcmp(argv[i],"-f")==0) properties |= FORCE_REPLACE;
+			else 
+				if(strcmp(argv[i],"-m")==0) properties |= CREATE_MAKE;
+			else 
+				if(strcmp(argv[i],"-i")==0) properties |= CREATE_MAIN;
+			else
+				if(strcmp(argv[i],"-cpp")==0) properties |= CREATE_CPP;
 			else
 				files[nfiles++]=i;
 		}
+		
+		printf("%i\n",properties);
 		
 		struct stat st = {0};
 		
@@ -76,49 +86,26 @@ int main(int argc, char ** argv, char ** envp)
 		
 		for(int x = 0; x < nfiles; x++){
 			
-			strcpy(filename,argv[files[x]]);
-			strcat(filename,".h");
-			
-			if(createH)
+			if(properties & CREATE_H)
 			{
+				
+				strcpy(filename,argv[files[x]]);
+				strcat(filename,".h");
+				
 				f = fopen(filename,"r");
 				
 				if(f)
 				{
+					char replace = 0;
+
+					if(properties & FORCE_REPLACE)
+						replace = 1;
 					
-					char replace=0;
-					if(forceReplace)
-					{
-						replace=1;
-					}
-					
-					else
-					{	
-						accept=0;
-						while(!(accept == 'y' || accept == 'n'))
-						{
-							printf("Overwrite existing file '%s'? (y\\n)\n",filename);
-							accept = getchar();
-							switch(accept)
-							{
-								case 'y': replace=1; break;
-								case 'n': replace=0; break;
-							}
-							printf("\n");
-						}
-						while ( (accept = getchar()) != '\n' && accept != EOF ) { }
-					}
-					
-					if (replace)
-					{
+					if(replace)
 						freopen(filename,"w",f);
-					}
 				}
-				
 				else
-				{
 					f = fopen(filename,"w");
-				}
 				
 				if(f)
 				{
@@ -134,14 +121,20 @@ int main(int argc, char ** argv, char ** envp)
 					fprintf(f,"#ifndef %s\n",hash);
 					fprintf(f,"#define %s\n\n",hash);
 					
+					if(x==0)
+						for(int y=1;y<nfiles;y++)
+							fprintf(f,"#include \"%s.h\"\n",argv[files[y]]);
+					fprintf(f,"\n");
+					
 					fprintf(f,"#endif // %s\n",hash);
 				}	
 			}
 			
-			strcpy(filename,argv[files[x]]);
-			strcat(filename,".cpp");
-			
-			if(createC){
+			if(properties & CREATE_CPP){
+				
+				strcpy(filename,argv[files[x]]);
+				strcat(filename,".cpp");
+				
 				if(f)
 				fclose(f);
 			
@@ -149,38 +142,16 @@ int main(int argc, char ** argv, char ** envp)
 				
 				if(f)
 				{
-					char replace=0;
-					if(forceReplace)
-					{
-						replace=1;
-					}
+					char replace = 0;
+
+					if(properties & FORCE_REPLACE)
+						replace = 1;
 					
-					else
-					{	
-						accept=0;
-						while(!(accept == 'y' || accept == 'n'))
-						{
-							printf("Overwrite existing file '%s'? (y\\n)\n",filename);
-							accept = getchar();
-							switch(accept)
-							{
-								case 'y': replace=1; break;
-								case 'n': replace=0; break;
-							}
-							printf("\n");
-						}
-						while ( (accept = getchar()) != '\n' && accept != EOF ) { }
-					}
-					
-					if (replace)
-					{
+					if(replace)
 						freopen(filename,"w",f);
-					}
 				}
 				else
-				{
 					f = fopen(filename,"w");
-				}
 				
 				if(f)
 				{
@@ -196,16 +167,11 @@ int main(int argc, char ** argv, char ** envp)
 					fprintf(f,"#ifndef %s\n",hash);
 					fprintf(f,"#define %s\n\n",hash);
 					
-					if(createH)
-					{
-						fprintf(f,"#include \"%s.h\"\n",argv[files[x]]);
-						if(x==0)
-							for(int y=1;y<nfiles;y++)
-								fprintf(f,"#include \"%s.h\"\n",argv[files[y]]);
-						fprintf(f,"\n");
-					}
+					if(properties & CREATE_H)
+						fprintf(f,"#include \"%s.h\"\n\n",argv[files[x]]);
 					
-					if(createMain && x==0){
+					
+					if(properties & CREATE_MAIN && x==0){
 						fprintf(f,"int main(int argc, char ** argv, char ** envp)\n{\n\n");
 					
 						fprintf(f,"	return 0;\n");
@@ -214,54 +180,85 @@ int main(int argc, char ** argv, char ** envp)
 					fprintf(f,"#endif // %s\n",hash);
 				}	
 			}
+			
+			if(properties & CREATE_C){
+				
+				strcpy(filename,argv[files[x]]);
+				strcat(filename,".c");
+				
+				if(f)
+				fclose(f);
+			
+				f = fopen(filename,"r");
+				
+				if(f)
+				{
+					char replace = 0;
+
+					if(properties & FORCE_REPLACE)
+						replace = 1;
+					
+					if(replace)
+						freopen(filename,"w",f);
+				}
+				else
+					f = fopen(filename,"w");
+				
+				if(f)
+				{
+					char hash[HASH_LEN];
+					strcpy(hash,"");
+					hashFunc(HASH_LEN,hash);
+					
+					fprintf(f,"// Filename: %s\n",filename);
+					fprintf(f,"// Author: %s\n",username);
+					fprintf(f,"// Date: %d-%d-%d\n",tm.tm_year+ 1900,tm.tm_mon + 1,tm.tm_mday);
+					fprintf(f,"// Description: %s implementation file\n\n",argv[files[x]]);
+					
+					fprintf(f,"#ifndef %s\n",hash);
+					fprintf(f,"#define %s\n\n",hash);
+					
+					if(properties & CREATE_H)
+						fprintf(f,"#include \"%s.h\"\n\n",argv[files[x]]);
+					
+					
+					if((properties & CREATE_MAIN) && x==0)
+					{
+						fprintf(f,"int main(int argc, char ** argv, char ** envp)\n{\n\n");
+					
+						fprintf(f,"	return 0;\n");
+						fprintf(f,"}\n\n");
+					}
+
+					fprintf(f,"#endif // %s\n",hash);
+				}	
+			}
 		}
 		
-		if(createMakefile)
+		printf("%i\n",properties & CREATE_MAKE);
+		
+		if(properties & CREATE_MAKE)
 		{
-			
+			printf("Makefile...\n");
 			strcpy(filename,"Makefile");
 		
 			if(f)
 				fclose(f);
 			
 			f = fopen(filename,"r");
-			
+		
 			if(f)
 			{
-				
-				char replace=0;
-				
-				if(forceReplace)
-				{
-					replace=1;
-				}
-				
-				else
-				{	
-					accept=0;
-					while(!(accept == 'y' || accept == 'n'))
-					{
-						printf("Overwrite existing file '%s'? (y\\n)\n",filename);
-						accept = getchar();
-						switch(accept)
-						{
-							case 'y': replace=1; break;
-							case 'n': replace=0; break;
-						}
-						printf("\n");
-					}
-					while ( (accept = getchar()) != '\n' && accept != EOF ) { }
-				}
-				
-				if (replace)
-				{
+				char replace = 0;
+
+				if(properties & FORCE_REPLACE)
+					replace = 1;
+					
+				if(replace)
 					freopen(filename,"w",f);
-				}
 			}
 			else
-			{
 				f = fopen(filename,"w");
-			}
 			
 			if(f)
 			{
@@ -281,7 +278,7 @@ int main(int argc, char ** argv, char ** envp)
 				
 				fprintf(f,"#Compiler Directions\nCXXFLAGS=\n\n");
 				
-				fprintf(f,"#Source Files\nSOURCE = $(wildcard *.cpp)\n\n");
+				fprintf(f,"#Source Files\nSOURCE = $(wildcard *.c *.cpp)\n\n");
 				
 				fprintf(f,"#Object Files\nOBJECTS = $(SOURCE:.cpp=.o)\n\n");
 				

@@ -18,6 +18,13 @@
 #define MAX_FILES 255
 #define HASH_LEN 32
 
+#define CREATE_C 1
+#define CREATE_H 2
+#define FORCE_REPLACE 4
+#define CREATE_MAKE 8
+#define CREATE_MAIN 16
+#define CREATE_CPP 32
+
 void hashFunc(int len, char * str);
 char getRandomASCII(int type);
 

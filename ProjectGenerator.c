@@ -78,7 +78,7 @@ int main(int argc, char ** argv, char ** envp)
 				files[nfiles++]=i;
 		}
 		
-		printf("%i\n",properties);
+		//printf("%i\n",properties);
 		
 		struct stat st = {0};
 		
@@ -235,7 +235,7 @@ int main(int argc, char ** argv, char ** envp)
 			}
 		}
 		
-		printf("%i\n",properties & CREATE_MAKE);
+		//printf("%i\n",properties & CREATE_MAKE);
 		
 		if(properties & CREATE_MAKE)
 		{
@@ -286,7 +286,7 @@ int main(int argc, char ** argv, char ** envp)
 				
 				fprintf(f,"#Build Executable\n$(PROJECT): $(OBJECTS)\n\t$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBRARIES) \n\n");
 				
-				fprintf(f,"#Clean up additional files\n.PHONY: clean\nclean:\n\trm -f $(OBJECT) $(PROJECT)");
+				fprintf(f,"#Clean up additional files\n.PHONY: clean\nclean:\n\trm -f *.o *.exe");
 			}
 		}
 	}
